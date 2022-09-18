@@ -4,31 +4,54 @@ pragma solidity ^0.8.9;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
+contract WaterDrops {
 
-    event Withdrawal(uint amount, uint when);
+  struct Claim {
+    ISuperToken token
+    int96 rate
+    uint duration
+    uint deadline
+  }
 
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
+  mapping(uint => Claim) claims;
+  uint claimCount = 0;
+  mapping(address => uint) userClaims;
+  address[] closureQueue;
+  uint queueIndex;
+  address owner;
 
-        unlockTime = _unlockTime;
-        owner = payable(msg.sender);
-    }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+  addClaim(ISuperToken token, uint rate, uint duration, uint deadline) public onlyOwner {
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+    // NOTE: Maybe require no streams so you can't run two claims at a time
+    Claim claim = new Claim(token, rate, duration, deadline);
+    claimCount += 1;
+    claims[claimCount] = claim;
 
-        emit Withdrawal(address(this).balance, block.timestamp);
+  }
 
-        owner.transfer(address(this).balance);
-    }
+  addUserClaim(address recipient, uint claimIndex) public onlyOwner {
+
+    userClaims[receipient] = claimIndex;
+
+  }
+
+  claim() public {
+
+    require(userClaims[msg.sender] != 0, 'no claims');
+    closureQueue.push(msg.sender);
+    startStreaming(msg.sender, token, rate);
+
+  }
+
+  closeNext() public {
+
+    address toClose = closureQueue[queueIndex];
+
+    // Two ways to check:
+    // 1. When did the stream start? Has duration amount of time passed?
+    // 2. How much has been streamed to this receipient so far? Is it more than rate * duration?
+
+  }
+
 }
