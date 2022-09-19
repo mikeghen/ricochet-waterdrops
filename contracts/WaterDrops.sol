@@ -94,6 +94,8 @@ contract WaterDrops {
       revert('not ready to close');
     }
 
+    // 2. How much has been streamed to this receipient so far? Is it more than rate * duration?
+    // TODO
   }
 
 }
