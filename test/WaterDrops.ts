@@ -1,13 +1,16 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-import { expect } from "chai";
-import { ethers } from "hardhat";
+import traveler from "ganache-time-traveler";
+
+let { Framework } = require("@superfluid-finance/sdk-core");
+let { expect, assert } = require("chai");
+let { ethers, web3 } = require("hardhat");
+
+let ricABI = require("./abis/fDAIABI");
 
 let deployFramework = require("@superfluid-finance/ethereum-contracts/scripts/deploy-framework");
 let deployTestToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-test-token");
 let deploySuperToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-super-token");
-
-let provider = web3;
 
 let accounts: any[]
 let admin: SignerWithAddress;
@@ -24,11 +27,15 @@ let ricx: InstanceType<typeof ricABI>;
 let superSigner: InstanceType<typeof sf.createSigner>;
 let waterDrops: InstanceType<typeof WaterDrops>;
 
+let errorHandler = (err: any) => {
+  if (err) throw err;
+};
+
 describe("WaterDrops", function () {
 
   before(async () => {
-    const [owner, alice, bob, carl, karen] = await ethers.getSigners();
-    accounts = [owner, alice, bob, carl, karen];
+    const [admin, alice, bob, carl, karen] = await ethers.getSigners();
+    accounts = [admin, alice, bob, carl, karen];
 
     //deploy the framework
     await deployFramework(errorHandler, {
@@ -51,7 +58,8 @@ describe("WaterDrops", function () {
     //initialize the superfluid framework...put custom and web3 only bc we are using hardhat locally
     sf = await Framework.create({
       networkName: "custom",
-      provider,
+      provider: web3,
+      chainId: 31337,
       dataMode: "WEB3_ONLY",
       resolverAddress: process.env.RESOLVER_ADDRESS, //this is how you get the resolver address
       protocolReleaseVersion: "test",
@@ -59,7 +67,7 @@ describe("WaterDrops", function () {
 
     superSigner = await sf.createSigner({
       signer: admin,
-      provider: provider
+      provider: web3
     });
 
     //use the framework to get the super token

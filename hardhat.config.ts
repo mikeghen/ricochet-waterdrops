@@ -3,6 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
+import "@nomiclabs/hardhat-truffle5"
+
 
 const config: HardhatUserConfig = {
   solidity: {
