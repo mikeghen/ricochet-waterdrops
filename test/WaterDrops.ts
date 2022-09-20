@@ -31,10 +31,22 @@ let errorHandler = (err: any) => {
   if (err) throw err;
 };
 
+// helpers
+export const currentBlockTimestamp = async () => {
+    const currentBlockNumber = await ethers.provider.getBlockNumber();
+    return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
+};
+
+export const increaseTime = async (seconds: any) => {
+    await network.provider.send("evm_increaseTime", [seconds]);
+    await network.provider.send("evm_mine");
+};
+
+
 describe("WaterDrops", function () {
 
   before(async () => {
-    const [admin, alice, bob, carl, karen] = await ethers.getSigners();
+    [admin, alice, bob, carl, karen] = await ethers.getSigners();
     accounts = [admin, alice, bob, carl, karen];
 
     //deploy the framework
@@ -113,8 +125,18 @@ describe("WaterDrops", function () {
 
   it("#1.1 - Create a new claimable waterdrop", async function () {
     // As owner, create a new Claim
+    let duration = 3600; // one hour
+    let rate = 1000000;  // tokens per second to claim
+    let deadline = (await currentBlockTimestamp()) * 7200; // 2 hours
+    await waterDrops.addClaim(ricx.address, rate, duration, deadline, {from: admin.address});
 
     // verify claim was made and saved correctly
+    let claim = await waterDrops.claims(1, {from: admin.address});
+    expect(claim.token).to.equal(ricx.address);
+    expect(claim.rate).to.equal(rate);
+    expect(claim.duration).to.equal(duration);
+    expect(claim.deadline).to.equal(deadline);
+
   });
 
   it("#1.2 - Creare new users claims", async function () {

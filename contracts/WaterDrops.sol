@@ -30,7 +30,7 @@ contract WaterDrops is Ownable {
     uint deadline;
   }
 
-  mapping(uint => Claim) claims;
+  mapping(uint => Claim) public claims;
   uint claimCount = 0;
   mapping(address => uint) userClaims;
   address[] closureQueue;
