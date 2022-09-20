@@ -3,29 +3,105 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
+let deployFramework = require("@superfluid-finance/ethereum-contracts/scripts/deploy-framework");
+let deployTestToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-test-token");
+let deploySuperToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-super-token");
+
+let provider = web3;
+
+let accounts: any[]
+let admin: SignerWithAddress;
+let alice: SignerWithAddress;
+let bob: SignerWithAddress;
+let carl: SignerWithAddress;
+let karen: SignerWithAddress;
+
+let App: any;
+
+let sf: InstanceType<typeof Framework>;;
+let ric: InstanceType<typeof ricABI>;
+let ricx: InstanceType<typeof ricABI>;
+let superSigner: InstanceType<typeof sf.createSigner>;
+let waterDrops: InstanceType<typeof WaterDrops>;
+
 describe("WaterDrops", function () {
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
-  async function deployOneYearLockFixture() {
-    const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-    const ONE_GWEI = 1_000_000_000;
 
-    // Contracts are deployed using the first signer/account by default
+  before(async () => {
     const [owner, alice, bob, carl, karen] = await ethers.getSigners();
+    accounts = [owner, alice, bob, carl, karen];
 
-    const accounts = [owner, alice, bob, carl, karen];
+    //deploy the framework
+    await deployFramework(errorHandler, {
+      web3,
+      from: admin.address,
+    });
 
-    const WaterDrops = await ethers.getContractFactory("WaterDrops");
-    const waterdrops = await WaterDrops.deploy(host, cfa);
+    //deploy a fake erc20 token
+    let fDAIAddress = await deployTestToken(errorHandler, [":", "fDAI"], {
+      web3,
+      from: admin.address,
+    });
 
-    return { waterdrops, accounts };
-  }
+    //deploy a fake erc20 wrapper super token around the fDAI token
+    let fDAIxAddress = await deploySuperToken(errorHandler, [":", "fDAI"], {
+      web3,
+      from: admin.address,
+    });
+
+    //initialize the superfluid framework...put custom and web3 only bc we are using hardhat locally
+    sf = await Framework.create({
+      networkName: "custom",
+      provider,
+      dataMode: "WEB3_ONLY",
+      resolverAddress: process.env.RESOLVER_ADDRESS, //this is how you get the resolver address
+      protocolReleaseVersion: "test",
+    });
+
+    superSigner = await sf.createSigner({
+      signer: admin,
+      provider: provider
+    });
+
+    //use the framework to get the super token
+    ricx = await sf.loadSuperToken("fDAIx");
+
+    //get the contract object for the erc20 token
+    let ricAddress = ricx.underlyingToken.address;
+    ric = new ethers.Contract(ricAddress, ricABI, admin);
+
+    App = await ethers.getContractFactory("WaterDrops", admin);
+
+    waterDrops = await App.deploy(
+        sf.settings.config.hostAddress,
+        sf.settings.config.cfaV1Address
+    );
+
+    await waterDrops.deployed();
+
+    // Make Some RICx tokens
+    await ric.mint(
+      admin.address, ethers.utils.parseEther("10000000")
+    );
+    await ric.connect(admin).approve(ricx.address, ethers.utils.parseEther("10000000"));
+
+    let ricxUpgradeOperation = ricx.upgrade({
+      amount: ethers.utils.parseEther("10000000")
+    });
+    await ricxUpgradeOperation.exec(admin);
+
+    // Transfer RICx to the waterdrops contract
+    let transferOperation = ricx.transfer({
+      receiver: waterDrops.address,
+      amount: ethers.utils.parseEther("10000000")
+    });
+    await transferOperation.exec(admin);
 
 
-  // before
-  // 0. Create 10 user addresses for 10 waterdrop claims
-  // 1. deploy the waterdrop contract
+  });
+
+  beforeEach(async function() {
+
+  });
 
   it("#1.1 - Create a new claimable waterdrop", async function () {
     // As owner, create a new Claim
