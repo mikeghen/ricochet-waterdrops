@@ -32,7 +32,7 @@ contract WaterDrops is Ownable {
 
   mapping(uint => Claim) public claims;
   uint claimCount = 0;
-  mapping(address => uint) userClaims;
+  mapping(address => uint) public userClaims;
   address[] closureQueue;
   uint queueIndex;
   CFAv1Library.InitData public cfaV1;
