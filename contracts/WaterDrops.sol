@@ -36,13 +36,20 @@ contract WaterDrops is Ownable {
   address[] closureQueue;
   uint queueIndex;
   CFAv1Library.InitData public cfaV1;
+  ISuperfluid internal host; // Superfluid host contract
   IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
 
-  constructor(ISuperfluid host, IConstantFlowAgreementV1 _cfa) {
+  constructor(ISuperfluid _host, IConstantFlowAgreementV1 _cfa) {
 
+    host = _host;
     cfa = _cfa;
-    cfaV1 = CFAv1Library.InitData(host, IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1")))));
+    // initialize InitData struct, and set equal to cfaV1
+    cfaV1 = CFAv1Library.InitData(
+        host,
+        cfa
+    );
+
   }
 
   function addClaim(ISuperToken token, int96 rate, uint duration, uint deadline) public onlyOwner {
@@ -63,12 +70,17 @@ contract WaterDrops is Ownable {
   function claim() public {
 
     require(userClaims[msg.sender] != 0, 'no claims');
+    require(claims[userClaims[msg.sender]].deadline < block.timestamp, 'dealine past');
     closureQueue.push(msg.sender);
     cfaV1.createFlow(msg.sender, claims[userClaims[msg.sender]].token, claims[userClaims[msg.sender]].rate);
 
   }
 
   function closeNext() public {
+
+    // Streams are opened sequentially, so they can be closed sequentially iff
+    // everyone in the claim is claiming the same amount. Only one claim can
+    // run at one time
 
     address toClose = closureQueue[queueIndex];
 
@@ -101,6 +113,19 @@ contract WaterDrops is Ownable {
 
     // 2. How much has been streamed to this recipient so far? Is it more than rate * duration?
     // TODO
+  }
+
+  function getFlow(address recipient) public view returns (uint256 timestamp,
+    int96 flowRate,
+    uint256 deposit,
+    uint256 owedDeposit)
+  {
+    (timestamp,
+      flowRate,
+      deposit,
+      owedDeposit) = cfa.getFlow(claims[userClaims[recipient]].token, address(this), recipient);
+
+
   }
 
 }

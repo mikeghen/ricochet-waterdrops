@@ -140,26 +140,28 @@ describe("WaterDrops", function () {
   });
 
   it("#1.2 - Creare new users claims", async function () {
-    // As owner, create a new user claim
+    // As owner, create a new user claims
     await waterDrops.addUserClaim(alice.address, 1, {from: admin.address});
-    // Repeat for all four users other user claims
     await waterDrops.addUserClaim(bob.address, 1, {from: admin.address});
-    await waterDrops.addUserClaim(carl.address, 1, {from: admin.address});
-    await waterDrops.addUserClaim(karen.address, 1, {from: admin.address});
 
     // Verify the userClaims were made correctly
     let userClaim = await waterDrops.userClaims(alice.address, {from: admin.address});
+    expect(userClaim).to.equal(1);
+    userClaim = await waterDrops.userClaims(bob.address, {from: admin.address});
     expect(userClaim).to.equal(1);
 
   });
 
   it("#1.3 - User can claim their waterdrop", async function () {
-    // As water drop receipient, claim the water drop
-
+    // As water drop recipient, claim the water drop
+    await waterDrops.connect(alice).claim();
+    console.log("alice", alice.address);
     // verify the stream exists to the receipient
+    let flow = await waterDrops.getFlow(alice.address);
+    console.log("flow", flow);
+    expect(flow.flowRate).to.equal(1000000);
+
   });
-
-
 
   it("#1.4 - Streams are closed when ready", async function () {
     // As the keeper, call the closeNext() method
