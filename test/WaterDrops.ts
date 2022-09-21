@@ -155,18 +155,47 @@ describe("WaterDrops", function () {
   it("#1.3 - User can claim their waterdrop", async function () {
     // As water drop recipient, claim the water drop
     await waterDrops.connect(alice).claim();
-    console.log("alice", alice.address);
     // verify the stream exists to the receipient
     let flow = await waterDrops.getFlow(alice.address);
-    console.log("flow", flow);
     expect(flow.flowRate).to.equal(1000000);
 
   });
 
   it("#1.4 - Streams are closed when ready", async function () {
     // As the keeper, call the closeNext() method
-    // Test that it reverts when noone is ready to be closed
-    // Fast forward time to the first close
+
+    // Add another claim to the closureQueue
+    increaseTime(1000)
+    await waterDrops.connect(bob).claim();
+
+    // Expect revert when not ready to close (i.e. an hour has not passed)
+    await expect(
+         waterDrops.closeNext(),
+      ).to.be.revertedWith('not ready to close');
+
+    // Fast forward time to the first close (Alice)
+    increaseTime(2600);
+
+    await waterDrops.closeNext();
+
+    let flow = await waterDrops.getFlow(alice.address);
+    expect(flow.flowRate).to.equal(0);
+
+    // Now close bob, the next in the queue
+
+    await expect(
+        waterDrops.closeNext(),
+      ).to.be.revertedWith('not ready to close');
+
+    increaseTime(2600);
+
+    await waterDrops.closeNext();
+
+    flow = await waterDrops.getFlow(bob.address);
+    expect(flow.flowRate).to.equal(0);
+
+
+
     // Test that it closes the stream to the user when its ready to be closed
   });
 

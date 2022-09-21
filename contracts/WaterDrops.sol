@@ -70,7 +70,7 @@ contract WaterDrops is Ownable {
   function claim() public {
 
     require(userClaims[msg.sender] != 0, 'no claims');
-    require(claims[userClaims[msg.sender]].deadline < block.timestamp, 'dealine past');
+    require(claims[userClaims[msg.sender]].deadline > block.timestamp, 'dealine past');
     closureQueue.push(msg.sender);
     cfaV1.createFlow(msg.sender, claims[userClaims[msg.sender]].token, claims[userClaims[msg.sender]].rate);
 
@@ -89,8 +89,8 @@ contract WaterDrops is Ownable {
       uint256 deposit,
       uint256 owedDeposit) = cfa.getFlow(
         claims[userClaims[toClose]].token,
-        toClose,
-        address(this)
+        address(this),
+        toClose
     );
 
     // Two ways to check:
