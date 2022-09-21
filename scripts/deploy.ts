@@ -1,18 +1,22 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  // Matic Mumbai
+  const HOST_ADDRESS = "0xEB796bdb90fFA0f28255275e16936D25d3418603";
+  const CFA_ADDRESS = "0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873";
+  const FDAIX_ADDRESS = "0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f"
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const [deployer] = await ethers.getSigners();
 
-  await lock.deployed();
+  console.log("Deploying contracts with the account:", deployer.address);
+  console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+  const WaterDrops = await ethers.getContractFactory("WaterDrops");
+  const waterDrops = await WaterDrops.deploy(HOST_ADDRESS, CFA_ADDRESS);
+  await waterDrops.deployed();
+  console.log("WaterDrops has been deployed at:", waterDrops.address);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
