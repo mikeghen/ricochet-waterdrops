@@ -178,6 +178,7 @@ describe("WaterDrops", function () {
 
     await waterDrops.closeNext();
 
+    console.log("Get alice flow", alice.address);
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(0);
 
@@ -191,12 +192,16 @@ describe("WaterDrops", function () {
 
     await waterDrops.closeNext();
 
+    console.log("Get bob flow");
     flow = await waterDrops.getFlow(bob.address);
     expect(flow.flowRate).to.equal(0);
 
+    // Expect that they can't claim again after closure
+    // await expect(
+    //      waterDrops.connect(alice).claim(),
+    //   ).to.be.revertedWith('no claims');
 
 
-    // Test that it closes the stream to the user when its ready to be closed
   });
 
   it("#1.5 - Admin close stream", async function () {

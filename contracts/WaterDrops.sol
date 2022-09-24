@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Business Source License
 pragma solidity ^0.8.9;
 
 import {
@@ -105,6 +105,8 @@ contract WaterDrops is Ownable {
       cfaV1.deleteFlow(address(this), toClose, claims[userClaims[toClose]].token);
       // Increment queue index and gelato will check on the next to close
       queueIndex += 1;
+      // Remove the claim for this user
+      userClaims[toClose] = 0;
     } else {
       // If we don't need to close, revert with message for Gelato
       revert('not ready to close');
@@ -124,8 +126,6 @@ contract WaterDrops is Ownable {
       flowRate,
       deposit,
       owedDeposit) = cfa.getFlow(claims[userClaims[recipient]].token, address(this), recipient);
-
-
   }
 
 }
