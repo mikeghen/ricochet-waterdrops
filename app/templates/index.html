@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" integrity="sha256-OweaP/Ic6rsV+lysfyS4h+LM6sRwuO3euTYfr6M124g=" crossorigin="anonymous" />
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  </head>
+
+  <body class="blue lighten-2">
+
+    <div class="row">
+      <div class="col"></div>
+      <div class = "col">
+        <img width="200px" src="{{ url_for('static', filename='tap.png') }}" >
+      </div>
+      <div class = "col">
+        <h3 style="margin-left: 5%">WaterDrops</h3>
+        <p style="margin-left: 5%">Claimable airdrops, real-time vesting</p>
+      </div>
+    </div>
+
+    <div class="col" style="margin: 5%">
+      <div class="card blue darken-2">
+        <div class="card-content white-text">
+          <table style="width:100%">
+            <tr>
+              <th>Claim</th>
+              <th>Token</th>
+              <th>Amount</th>
+              <th>Duration</th>
+              <th>Deadline</th>
+              <th>Total Claimed</th>
+              <th> </th>
+              <th> </th>
+            </tr>
+            <tr>
+              <td>Ricochet WaterDrop</td>
+              <td>RIC<br/></td>
+              <td><div id='claim-amount'>1000</div> RIC</td>
+              <!-- <td><div id="output">0</div> USDCx</td> -->
+              <td><div id='claim-duration'>30</div> days</td>
+              <td><div id='claim-expireation'>2022-10-15</div></td>
+              <td><span id="ric-balance">0</span> RIC</td>
+              <td><button id="claim">Claim</button></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- JQuery 3.4.1 slim minified -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <!-- Compiled and minified JavaScript for Materialize CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" integrity="sha256-U/cHDMTIHCeMcvehBv1xQ052bPSbJtbuiw4QA9cTKz0=" crossorigin="anonymous"></script>
+    <!-- Web3.js -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.2.5-rc.0/dist/web3.min.js" integrity="sha256-ZjUHyLZZWkQPbWfRjTSmGtfcTSOermVT6f/CvJW2RY4=" crossorigin="anonymous"></script>
+
+    <script src="{{ url_for('static', filename='dapp.js') }}"></script>
+  </body>
+</html>
