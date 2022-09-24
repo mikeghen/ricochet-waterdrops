@@ -122,10 +122,18 @@ contract WaterDrops is Ownable {
     uint256 deposit,
     uint256 owedDeposit)
   {
-    (timestamp,
-      flowRate,
-      deposit,
-      owedDeposit) = cfa.getFlow(claims[userClaims[recipient]].token, address(this), recipient);
+    // If there's no userClaim for the recipient then they don't have a stream
+    if (userClaims[recipient] != 0) {
+      (timestamp,
+        flowRate,
+        deposit,
+        owedDeposit) = cfa.getFlow(claims[userClaims[recipient]].token, address(this), recipient);
+    } else {
+      timestamp = 0;
+      flowRate = 0;
+      deposit = 0;
+      owedDeposit = 0;
+    }
   }
 
 }
