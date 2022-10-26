@@ -22,13 +22,21 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    polygon: {
+      chainId: 137,
+      url: process.env.POLYGON_NODE_URL || "",
+      accounts:
+        process.env.POLYGON_PRIVATE_KEY !== undefined ? [process.env.POLYGON_PRIVATE_KEY] : [],
+    },
   },
   // gasReporter: {
   //   enabled: process.env.REPORT_GAS !== undefined,
   //   currency: "USD",
   // },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+    }
   },
 };
 
