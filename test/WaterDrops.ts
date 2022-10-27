@@ -139,7 +139,7 @@ describe("WaterDrops", function () {
 
   });
 
-  it("#1.2 - Creare new users claims", async function () {
+  it("#1.2 - Create new users claims", async function () {
     // As owner, create a new user claims
     await waterDrops.addUserClaim(alice.address, 1, {from: admin.address});
     await waterDrops.addUserClaim(bob.address, 1, {from: admin.address});
@@ -155,7 +155,7 @@ describe("WaterDrops", function () {
   it("#1.3 - User can claim their waterdrop", async function () {
     // As water drop recipient, claim the water drop
     await waterDrops.connect(alice).claim();
-    // verify the stream exists to the receipient
+    // verify the stream exists to the recipient
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
 
