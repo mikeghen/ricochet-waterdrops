@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Business Source License
+/// SPDX-License-Identifier: Business Source License
 pragma solidity ^0.8.9;
 
 import {
@@ -22,6 +22,12 @@ import "hardhat/console.sol";
 contract WaterDrops is Ownable {
 
   using CFAv1Library for CFAv1Library.InitData;
+
+  event NewClaim(uint claimIndex, ISuperToken token, int96 rate, uint duration, uint deadline);
+  event NewUserClaim(address recipient, uint claimIndex);
+  event Claimed(address user, uint256 rate);
+  event StreamClosed(address user, address token, uint256 duration, uint256 timestamp, int96 flowRate, uint256 deposit, uint256 owedDeposit);
+  event FlowRetrieved(address indexed recipient, uint256 timestamp, int96 flowRate, uint256 deposit, uint256 owedDeposit);
 
   struct Claim {
     ISuperToken token;
@@ -59,11 +65,15 @@ contract WaterDrops is Ownable {
     claimCount += 1;
     claims[claimCount] = claim;
 
+    emit NewClaim(claimIndex, token, rate, duration, deadline);
+
   }
 
   function addUserClaim(address recipient, uint claimIndex) public onlyOwner {
 
     userClaims[recipient] = claimIndex;
+
+    emit NewUserClaim(recipient, claimIndex);
 
   }
 
@@ -73,6 +83,8 @@ contract WaterDrops is Ownable {
     require(claims[userClaims[msg.sender]].deadline > block.timestamp, 'dealine past');
     closureQueue.push(msg.sender);
     cfaV1.createFlow(msg.sender, claims[userClaims[msg.sender]].token, claims[userClaims[msg.sender]].rate);
+
+    emit Claimed(msg.sender, claims[userClaims[msg.sender]].rate);
 
   }
 
@@ -107,6 +119,9 @@ contract WaterDrops is Ownable {
       queueIndex += 1;
       // Remove the claim for this user
       userClaims[toClose] = 0;
+
+      // Emit the StreamClosed event
+      emit StreamClosed(toClose, claims[userClaims[toClose]].token, duration, timestamp, flowRate, deposit, owedDeposit);
     } else {
       // If we don't need to close, revert with message for Gelato
       revert('not ready to close');
@@ -134,6 +149,8 @@ contract WaterDrops is Ownable {
       deposit = 0;
       owedDeposit = 0;
     }
+
+    emit FlowRetrieved(recipient, timestamp, flowRate, deposit, owedDeposit);
   }
 
 }
