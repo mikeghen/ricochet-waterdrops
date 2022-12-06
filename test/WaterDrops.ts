@@ -1,6 +1,7 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import traveler from "ganache-time-traveler";
+import { isCallTrace } from "hardhat/internal/hardhat-network/stack-traces/message-trace";
 
 let { Framework } = require("@superfluid-finance/sdk-core");
 let { expect, assert } = require("chai");
@@ -137,9 +138,16 @@ describe("WaterDrops", function () {
     expect(claim.duration).to.equal(duration);
     expect(claim.deadline).to.equal(deadline);
 
+    // Call the addClaim function and expect the NewClaim event to be emitted
+    await expect(
+      waterDrops.addClaim(ricx.address, rate, duration, deadline, {from: admin.address})
+    ).to.emit(
+      waterDrops,
+      "NewClaim"
+    ).withArgs(ricx.address, rate, duration, deadline);
   });
 
-  it("#1.2 - Creare new users claims", async function () {
+  it("#1.2 - Create new users claims", async function () {
     // As owner, create a new user claims
     await waterDrops.addUserClaim(alice.address, 1, {from: admin.address});
     await waterDrops.addUserClaim(bob.address, 1, {from: admin.address});
@@ -150,6 +158,13 @@ describe("WaterDrops", function () {
     userClaim = await waterDrops.userClaims(bob.address, {from: admin.address});
     expect(userClaim).to.equal(1);
 
+    // Check that the "NewUserClaim" event is emitted
+    await expect(waterDrops.addUserClaim(alice.address, 1, {from: admin.address}))
+      .to.emit(alice.address, 1, "NewUserClaim")
+      .withArgs(alice.address, 1);
+    await expect(waterDrops.addUserClaim(bob.address, 1, {from: admin.address}))
+      .to.emit(bob.address, 1, "NewUserClaim")
+      .withArgs(bob.address, 1);
   });
 
   it("#1.3 - User can claim their waterdrop", async function () {
@@ -158,6 +173,14 @@ describe("WaterDrops", function () {
     // verify the stream exists to the receipient
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
+
+    // check for emission
+    await expect(waterDrops.connect(alice).claim()).to.emit(
+    waterDrops.Claimed({
+      user: alice.address,
+      claimId: 1
+  })
+);
 
   });
 
@@ -201,6 +224,7 @@ describe("WaterDrops", function () {
     //      waterDrops.connect(alice).claim(),
     //   ).to.be.revertedWith('no claims');
 
+    await expect(waterDrops.closeNext()).to.emit(waterDrops.CloseStream()).withArgs(alice.address);
 
   });
 
@@ -211,7 +235,5 @@ describe("WaterDrops", function () {
   it("#1.6 - Admin emergency drain", async function () {
     // Test a method to drain the contract
   });
-
-
 
 });
