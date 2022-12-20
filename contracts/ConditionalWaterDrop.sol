@@ -28,6 +28,10 @@ contract ConditionalWaterDrop is Ownable {
 
   using CFAv1Library for CFAv1Library.InitData;
 
+  event Claimed(address user, uint256 rate);
+  event StreamClosed(address user, address token, uint256 duration, uint256 timestamp, int96 flowRate, uint256 deposit, uint256 owedDeposit);
+  event FlowRetrieved(address indexed recipient, uint256 timestamp, int96 flowRate, uint256 deposit, uint256 owedDeposit);
+
   struct Claim {
     ISuperToken token;
     int96 rate;
@@ -110,6 +114,7 @@ contract ConditionalWaterDrop is Ownable {
     closureQueue.push(msg.sender);
     cfaV1.createFlow(msg.sender, waterDrop.token, waterDrop.rate);
 
+    emit Claimed(msg.sender, waterDrop.rate);
   }
 
   function closeNext() public {
@@ -140,6 +145,9 @@ contract ConditionalWaterDrop is Ownable {
       cfaV1.deleteFlow(address(this), toClose, waterDrop.token);
       // Increment queue index and gelato will check on the next to close
       queueIndex += 1;
+
+      // Emit event after Stream is closed
+      emit StreamClosed(toClose, waterDrop.token, waterDrop.duration, timestamp, flowRate, deposit, owedDeposit);
     } else {
       // If we don't need to close, revert with message for Gelato
       revert('not ready to close');
@@ -147,7 +155,7 @@ contract ConditionalWaterDrop is Ownable {
 
   }
 
-  // Convinence method for getting flow information
+  // Convenience method for getting flow information
   function getFlow(address recipient) public view returns (uint256 timestamp,
     int96 flowRate,
     uint256 deposit,
@@ -157,6 +165,8 @@ contract ConditionalWaterDrop is Ownable {
       flowRate,
       deposit,
       owedDeposit) = cfa.getFlow(waterDrop.token, address(this), recipient);
+    
+    emit FlowRetrieved(recipient, timestamp, flowRate, deposit, owedDeposit);
   }
 
 }
