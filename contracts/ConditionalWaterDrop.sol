@@ -36,11 +36,11 @@ contract ConditionalWaterDrop is Ownable {
   }
 
   // Claims tracking Variables
-  Claim waterDrop;
-  uint claimCount = 0;
-  address[] closureQueue;
-  uint queueIndex;
-  mapping(address=>bool) hasClaimed;
+  Claim public waterDrop;
+  uint public claimCount = 0;
+  address[] public closureQueue;
+  uint public queueIndex;
+  mapping(address=>bool) public hasClaimed;
 
   // Sueprfluid Variables
   CFAv1Library.InitData public cfaV1;

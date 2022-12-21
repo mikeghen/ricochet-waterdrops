@@ -18,17 +18,28 @@ const config: HardhatUserConfig = {
   networks: {
     mumbai: {
       chainId: 80001,
+      gas: 8000000,
       url: process.env.MUMBAI_NODE_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    polygon: {
+      chainId: 137,
+      gas: 8000000,
+      url: process.env.POLYGON_NODE_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    }
   },
   // gasReporter: {
   //   enabled: process.env.REPORT_GAS !== undefined,
   //   currency: "USD",
   // },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+      polygon: process.env.POLYGONSCAN_API_KEY
+    }
   },
 };
 
