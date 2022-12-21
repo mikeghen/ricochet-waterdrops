@@ -20,7 +20,7 @@ contract ConditionalWaterDrop is Ownable {
 
     using CFAv1Library for CFAv1Library.InitData;
 
-    event Claimed(address user, uint256 rate);
+    event Claimed(address user, int96 rate);
     event StreamClosed(
         address user,
         address token,
@@ -150,7 +150,7 @@ contract ConditionalWaterDrop is Ownable {
             // Emit event after Stream is closed
             emit StreamClosed(
                 toClose,
-                waterDrop.token,
+                address(waterDrop.token),
                 waterDrop.duration,
                 timestamp,
                 flowRate,
@@ -180,14 +180,6 @@ contract ConditionalWaterDrop is Ownable {
             waterDrop.token,
             address(this),
             recipient
-        );
-
-        emit FlowRetrieved(
-            recipient,
-            timestamp,
-            flowRate,
-            deposit,
-            owedDeposit
         );
     }
 }

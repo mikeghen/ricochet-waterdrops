@@ -23,18 +23,11 @@ contract WaterDrops is Ownable {
         uint deadline
     );
     event NewUserClaim(address recipient, uint claimIndex);
-    event Claimed(address user, uint256 rate);
+    event Claimed(address user, int96 rate);
     event StreamClosed(
         address user,
         address token,
         uint256 duration,
-        uint256 timestamp,
-        int96 flowRate,
-        uint256 deposit,
-        uint256 owedDeposit
-    );
-    event FlowRetrieved(
-        address indexed recipient,
         uint256 timestamp,
         int96 flowRate,
         uint256 deposit,
@@ -75,7 +68,7 @@ contract WaterDrops is Ownable {
         claimCount += 1;
         claims[claimCount] = claim;
 
-        emit NewClaim(claimIndex, token, rate, duration, deadline);
+        emit NewClaim(claimCount, token, rate, duration, deadline);
     }
 
     function addUserClaim(address recipient, uint claimIndex) public onlyOwner {
@@ -140,7 +133,7 @@ contract WaterDrops is Ownable {
             // Emit the StreamClosed event
             emit StreamClosed(
                 toClose,
-                claims[userClaims[toClose]].token,
+                address(claims[userClaims[toClose]].token),
                 duration,
                 timestamp,
                 flowRate,
@@ -181,13 +174,5 @@ contract WaterDrops is Ownable {
             deposit = 0;
             owedDeposit = 0;
         }
-
-        emit FlowRetrieved(
-            recipient,
-            timestamp,
-            flowRate,
-            deposit,
-            owedDeposit
-        );
     }
 }
