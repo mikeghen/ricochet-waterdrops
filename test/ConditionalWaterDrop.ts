@@ -215,12 +215,9 @@ describe("ConditionalWaterDrop", function () {
     increaseTime(3700);
 
     // Try claim
-    await expect(waterDrops.connect(alice).claim()).to.emit(
-      waterDrops.Claimed({
-        user: alice.address,
-        claimId: 1
-      })
-    );
+    await expect(waterDrops.connect(alice).claim())
+      .to.emit(waterDrops, "Claimed")
+      .withArgs(alice.address, 1000000);
     // Verify claimed for alice
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
@@ -241,9 +238,7 @@ describe("ConditionalWaterDrop", function () {
     // Fast forward time to the first close (Alice)
     increaseTime(2600);
 
-    await expect(waterDrops.closeNext()).to.emit(
-      waterDrops.CloseStream()
-    ).withArgs(alice.address);
+    await waterDrops.closeNext();
 
     flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(0);
@@ -256,9 +251,7 @@ describe("ConditionalWaterDrop", function () {
 
     increaseTime(2600);
 
-    await expect(waterDrops.closeNext()).to.emit(
-      waterDrops.CloseStream()
-    ).withArgs(bob.address);
+    await waterDrops.closeNext();
 
     flow = await waterDrops.getFlow(bob.address);
     expect(flow.flowRate).to.equal(0);

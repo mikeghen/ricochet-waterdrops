@@ -141,7 +141,7 @@ describe("WaterDrops", function () {
       })
     )
       .to.emit(waterDrops, "NewClaim")
-      .withArgs(ricx.address, rate, duration, deadline);
+      .withArgs(2, ricx.address, rate, duration, deadline);
   });
 
   it("#1.2 - Create new users claims", async function () {
@@ -163,12 +163,12 @@ describe("WaterDrops", function () {
     await expect(
       waterDrops.addUserClaim(alice.address, 1, { from: admin.address })
     )
-      .to.emit(alice.address, 1, "NewUserClaim")
+      .to.emit(waterDrops, "NewUserClaim")
       .withArgs(alice.address, 1);
     await expect(
       waterDrops.addUserClaim(bob.address, 1, { from: admin.address })
     )
-      .to.emit(bob.address, 1, "NewUserClaim")
+      .to.emit(waterDrops, "NewUserClaim")
       .withArgs(bob.address, 1);
   });
 
@@ -180,12 +180,9 @@ describe("WaterDrops", function () {
     expect(flow.flowRate).to.equal(1000000);
 
     // check for emission
-    await expect(waterDrops.connect(alice).claim()).to.emit(
-      waterDrops.Claimed({
-        user: alice.address,
-        claimId: 1,
-      })
-    );
+    await expect(waterDrops.connect(alice).claim())
+      .to.emit(waterDrops, "Claimed")
+      .withArgs(alice.address, 1);
   });
 
   it("#1.4 - Streams are closed when ready", async function () {
@@ -229,7 +226,7 @@ describe("WaterDrops", function () {
     //   ).to.be.revertedWith('no claims');
 
     await expect(waterDrops.closeNext())
-      .to.emit(waterDrops.CloseStream())
+      .to.emit(waterDrops, "CloseStream")
       .withArgs(alice.address);
   });
 
