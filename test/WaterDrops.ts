@@ -170,7 +170,7 @@ describe("WaterDrops", function () {
   it("#1.3 - User can claim their waterdrop", async function () {
     // As water drop recipient, claim the water drop
     await waterDrops.connect(alice).claim();
-    // verify the stream exists to the receipient
+    // verify the stream exists to the recipient
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
 

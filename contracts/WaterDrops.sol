@@ -61,9 +61,9 @@ contract WaterDrops is Ownable {
   function addClaim(ISuperToken token, int96 rate, uint duration, uint deadline) public onlyOwner {
 
     // NOTE: Maybe require no streams so you can't run two claims at a time
-    Claim memory claim = Claim(token, rate, duration, deadline);
+    Claim memory claimm = Claim(token, rate, duration, deadline);
     claimCount += 1;
-    claims[claimCount] = claim;
+    claims[claimCount] = claimm;
 
     emit NewClaim(claimIndex, token, rate, duration, deadline);
 
