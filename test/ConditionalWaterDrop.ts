@@ -238,7 +238,7 @@ describe("ConditionalWaterDrop", function () {
     // Fast forward time to the first close (Alice)
     increaseTime(2600);
 
-    await waterDrops.closeNext();
+    await expect(waterDrops.closeNext()).to.emit(waterDrops, "StreamClosed");
 
     flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(0);
@@ -251,7 +251,7 @@ describe("ConditionalWaterDrop", function () {
 
     increaseTime(2600);
 
-    await waterDrops.closeNext();
+    await expect(waterDrops.closeNext()).to.emit(waterDrops, "StreamClosed");
 
     flow = await waterDrops.getFlow(bob.address);
     expect(flow.flowRate).to.equal(0);

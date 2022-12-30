@@ -30,13 +30,6 @@ contract ConditionalWaterDrop is Ownable {
         uint256 deposit,
         uint256 owedDeposit
     );
-    event FlowRetrieved(
-        address indexed recipient,
-        uint256 timestamp,
-        int96 flowRate,
-        uint256 deposit,
-        uint256 owedDeposit
-    );
 
     struct Claim {
         ISuperToken token;
