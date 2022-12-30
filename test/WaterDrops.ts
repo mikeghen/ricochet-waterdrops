@@ -13,7 +13,7 @@ let deployFramework = require("@superfluid-finance/ethereum-contracts/scripts/de
 let deployTestToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-test-token");
 let deploySuperToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-super-token");
 
-let accounts: any[]
+let accounts: any[];
 let admin: SignerWithAddress;
 let alice: SignerWithAddress;
 let bob: SignerWithAddress;
@@ -22,7 +22,7 @@ let karen: SignerWithAddress;
 
 let App: any;
 
-let sf: InstanceType<typeof Framework>;;
+let sf: InstanceType<typeof Framework>;
 let ric: InstanceType<typeof ricABI>;
 let ricx: InstanceType<typeof ricABI>;
 let superSigner: InstanceType<typeof sf.createSigner>;
@@ -34,18 +34,16 @@ let errorHandler = (err: any) => {
 
 // helpers
 export const currentBlockTimestamp = async () => {
-    const currentBlockNumber = await ethers.provider.getBlockNumber();
-    return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
+  const currentBlockNumber = await ethers.provider.getBlockNumber();
+  return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
 };
 
 export const increaseTime = async (seconds: any) => {
-    await network.provider.send("evm_increaseTime", [seconds]);
-    await network.provider.send("evm_mine");
+  await network.provider.send("evm_increaseTime", [seconds]);
+  await network.provider.send("evm_mine");
 };
 
-
 describe("WaterDrops", function () {
-
   before(async () => {
     [admin, alice, bob, carl, karen] = await ethers.getSigners();
     accounts = [admin, alice, bob, carl, karen];
@@ -80,7 +78,7 @@ describe("WaterDrops", function () {
 
     superSigner = await sf.createSigner({
       signer: admin,
-      provider: web3
+      provider: web3,
     });
 
     //use the framework to get the super token
@@ -93,46 +91,44 @@ describe("WaterDrops", function () {
     App = await ethers.getContractFactory("WaterDrops", admin);
 
     waterDrops = await App.deploy(
-        sf.settings.config.hostAddress,
-        sf.settings.config.cfaV1Address
+      sf.settings.config.hostAddress,
+      sf.settings.config.cfaV1Address
     );
 
     await waterDrops.deployed();
 
     // Make Some RICx tokens
-    await ric.mint(
-      admin.address, ethers.utils.parseEther("10000000")
-    );
-    await ric.connect(admin).approve(ricx.address, ethers.utils.parseEther("10000000"));
+    await ric.mint(admin.address, ethers.utils.parseEther("10000000"));
+    await ric
+      .connect(admin)
+      .approve(ricx.address, ethers.utils.parseEther("10000000"));
 
     let ricxUpgradeOperation = ricx.upgrade({
-      amount: ethers.utils.parseEther("10000000")
+      amount: ethers.utils.parseEther("10000000"),
     });
     await ricxUpgradeOperation.exec(admin);
 
     // Transfer RICx to the waterdrops contract
     let transferOperation = ricx.transfer({
       receiver: waterDrops.address,
-      amount: ethers.utils.parseEther("10000000")
+      amount: ethers.utils.parseEther("10000000"),
     });
     await transferOperation.exec(admin);
-
-
   });
 
-  beforeEach(async function() {
-
-  });
+  beforeEach(async function () {});
 
   it("#1.1 - Create a new claimable waterdrop", async function () {
     // As owner, create a new Claim
     let duration = 3600; // one hour
-    let rate = 1000000;  // tokens per second to claim
+    let rate = 1000000; // tokens per second to claim
     let deadline = (await currentBlockTimestamp()) * 7200; // 2 hours
-    await waterDrops.addClaim(ricx.address, rate, duration, deadline, {from: admin.address});
+    await waterDrops.addClaim(ricx.address, rate, duration, deadline, {
+      from: admin.address,
+    });
 
     // verify claim was made and saved correctly
-    let claim = await waterDrops.claims(1, {from: admin.address});
+    let claim = await waterDrops.claims(1, { from: admin.address });
     expect(claim.token).to.equal(ricx.address);
     expect(claim.rate).to.equal(rate);
     expect(claim.duration).to.equal(duration);
@@ -140,30 +136,39 @@ describe("WaterDrops", function () {
 
     // Call the addClaim function and expect the NewClaim event to be emitted
     await expect(
-      waterDrops.addClaim(ricx.address, rate, duration, deadline, {from: admin.address})
-    ).to.emit(
-      waterDrops,
-      "NewClaim"
-    ).withArgs(ricx.address, rate, duration, deadline);
+      waterDrops.addClaim(ricx.address, rate, duration, deadline, {
+        from: admin.address,
+      })
+    )
+      .to.emit(waterDrops, "NewClaim")
+      .withArgs(2, ricx.address, rate, duration, deadline);
   });
 
   it("#1.2 - Create new users claims", async function () {
     // As owner, create a new user claims
-    await waterDrops.addUserClaim(alice.address, 1, {from: admin.address});
-    await waterDrops.addUserClaim(bob.address, 1, {from: admin.address});
+    await waterDrops.addUserClaim(alice.address, 1, { from: admin.address });
+    await waterDrops.addUserClaim(bob.address, 1, { from: admin.address });
 
     // Verify the userClaims were made correctly
-    let userClaim = await waterDrops.userClaims(alice.address, {from: admin.address});
+    let userClaim = await waterDrops.userClaims(alice.address, {
+      from: admin.address,
+    });
     expect(userClaim).to.equal(1);
-    userClaim = await waterDrops.userClaims(bob.address, {from: admin.address});
+    userClaim = await waterDrops.userClaims(bob.address, {
+      from: admin.address,
+    });
     expect(userClaim).to.equal(1);
 
     // Check that the "NewUserClaim" event is emitted
-    await expect(waterDrops.addUserClaim(alice.address, 1, {from: admin.address}))
-      .to.emit(alice.address, 1, "NewUserClaim")
+    await expect(
+      waterDrops.addUserClaim(alice.address, 1, { from: admin.address })
+    )
+      .to.emit(waterDrops, "NewUserClaim")
       .withArgs(alice.address, 1);
-    await expect(waterDrops.addUserClaim(bob.address, 1, {from: admin.address}))
-      .to.emit(bob.address, 1, "NewUserClaim")
+    await expect(
+      waterDrops.addUserClaim(bob.address, 1, { from: admin.address })
+    )
+      .to.emit(waterDrops, "NewUserClaim")
       .withArgs(bob.address, 1);
   });
 
@@ -175,26 +180,22 @@ describe("WaterDrops", function () {
     expect(flow.flowRate).to.equal(1000000);
 
     // check for emission
-    await expect(waterDrops.connect(alice).claim()).to.emit(
-    waterDrops.Claimed({
-      user: alice.address,
-      claimId: 1
-  })
-);
-
+    await expect(waterDrops.connect(alice).claim())
+      .to.emit(waterDrops, "Claimed")
+      .withArgs(alice.address, 1);
   });
 
   it("#1.4 - Streams are closed when ready", async function () {
     // As the keeper, call the closeNext() method
 
     // Add another claim to the closureQueue
-    increaseTime(1000)
+    increaseTime(1000);
     await waterDrops.connect(bob).claim();
 
     // Expect revert when not ready to close (i.e. an hour has not passed)
-    await expect(
-         waterDrops.closeNext(),
-      ).to.be.revertedWith('not ready to close');
+    await expect(waterDrops.closeNext()).to.be.revertedWith(
+      "not ready to close"
+    );
 
     // Fast forward time to the first close (Alice)
     increaseTime(2600);
@@ -207,9 +208,9 @@ describe("WaterDrops", function () {
 
     // Now close bob, the next in the queue
 
-    await expect(
-        waterDrops.closeNext(),
-      ).to.be.revertedWith('not ready to close');
+    await expect(waterDrops.closeNext()).to.be.revertedWith(
+      "not ready to close"
+    );
 
     increaseTime(2600);
 
@@ -224,8 +225,9 @@ describe("WaterDrops", function () {
     //      waterDrops.connect(alice).claim(),
     //   ).to.be.revertedWith('no claims');
 
-    await expect(waterDrops.closeNext()).to.emit(waterDrops.CloseStream()).withArgs(alice.address);
-
+    await expect(waterDrops.closeNext())
+      .to.emit(waterDrops, "CloseStream")
+      .withArgs(alice.address);
   });
 
   it("#1.5 - Admin close stream", async function () {
@@ -235,5 +237,4 @@ describe("WaterDrops", function () {
   it("#1.6 - Admin emergency drain", async function () {
     // Test a method to drain the contract
   });
-
 });
