@@ -19,7 +19,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
 
-contract WaterDrops is Ownable {
+contract WaterDrop is Ownable {
 
   using CFAv1Library for CFAv1Library.InitData;
 
@@ -29,18 +29,27 @@ contract WaterDrops is Ownable {
     uint duration;
     uint deadline;
   }
-
-  mapping(uint => Claim) public claims;
-  uint claimCount = 0;
-  mapping(address => uint) public userClaims;
+  // Claims tracking variables
+  Claim public waterDrop;
+  mapping(address=>bool) public userClaims;
+  uint public claimCount = 0;
   address[] closureQueue;
   uint queueIndex;
+  mapping(address=>bool) public hasClaimed;
+
+  // Superfluid variables
   CFAv1Library.InitData public cfaV1;
   ISuperfluid internal host; // Superfluid host contract
   IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
 
-  constructor(ISuperfluid _host, IConstantFlowAgreementV1 _cfa) {
+  constructor(ISuperfluid _host,
+    IConstantFlowAgreementV1 _cfa,
+    ISuperToken _claimToken,
+    int96 _rate,
+    uint _duration,
+    uint _deadline
+  ) {
 
     host = _host;
     cfa = _cfa;
@@ -49,30 +58,27 @@ contract WaterDrops is Ownable {
         host,
         cfa
     );
-
+    // Save the claim info
+    waterDrop = Claim(_claimToken, _rate, _duration, _deadline);
   }
 
-  function addClaim(ISuperToken token, int96 rate, uint duration, uint deadline) public onlyOwner {
-
-    // NOTE: Maybe require no streams so you can't run two claims at a time
-    Claim memory claim = Claim(token, rate, duration, deadline);
-    claimCount += 1;
-    claims[claimCount] = claim;
-
-  }
-
-  function addUserClaim(address recipient, uint claimIndex) public onlyOwner {
-
-    userClaims[recipient] = claimIndex;
-
+  // Used to add accounts to be eligible for the claim
+  function addUserClaim(address recipient) public onlyOwner {
+    userClaims[recipient] = true;
   }
 
   function claim() public {
+    // Anyone can claim as long as they meet the conditions below
+    require(waterDrop.deadline > block.timestamp, 'dealine past');
+    require(hasClaimed[msg.sender] == false, 'already claimed');
 
-    require(userClaims[msg.sender] != 0, 'no claims');
-    require(claims[userClaims[msg.sender]].deadline > block.timestamp, 'dealine past');
+    // Require they have a user claim
+    require(userClaims[msg.sender] == true, 'no claim for user');
+
+    // Mark as claimed and add them to the end of the closure queue
+    hasClaimed[msg.sender] = true;
     closureQueue.push(msg.sender);
-    cfaV1.createFlow(msg.sender, claims[userClaims[msg.sender]].token, claims[userClaims[msg.sender]].rate);
+    cfaV1.createFlow(msg.sender, waterDrop.token, waterDrop.rate);
 
   }
 
@@ -88,25 +94,25 @@ contract WaterDrops is Ownable {
       int96 flowRate,
       uint256 deposit,
       uint256 owedDeposit) = cfa.getFlow(
-        claims[userClaims[toClose]].token,
+        waterDrop.token,
         address(this),
         toClose
     );
 
-    // Two ways to check:
-    // 1. When did the stream start? Has duration amount of time passed?
+    // When did the stream start? Has duration amount of time passed?
+    // If enough time has passed, close the stream
 
     // How much time has passed?
     uint256 duration = block.timestamp - timestamp;
 
     // Is that larger than the claim's duration?
-    if (duration > claims[userClaims[toClose]].duration) {
+    if (duration > waterDrop.duration) {
       // Streams over, close stram to toClose
-      cfaV1.deleteFlow(address(this), toClose, claims[userClaims[toClose]].token);
+      cfaV1.deleteFlow(address(this), toClose, waterDrop.token);
       // Increment queue index and gelato will check on the next to close
       queueIndex += 1;
       // Remove the claim for this user
-      userClaims[toClose] = 0;
+      userClaims[toClose] = false;
     } else {
       // If we don't need to close, revert with message for Gelato
       revert('not ready to close');
@@ -117,23 +123,16 @@ contract WaterDrops is Ownable {
     // TODO
   }
 
+  // Convinence method for getting flow information
   function getFlow(address recipient) public view returns (uint256 timestamp,
     int96 flowRate,
     uint256 deposit,
     uint256 owedDeposit)
   {
-    // If there's no userClaim for the recipient then they don't have a stream
-    if (userClaims[recipient] != 0) {
-      (timestamp,
-        flowRate,
-        deposit,
-        owedDeposit) = cfa.getFlow(claims[userClaims[recipient]].token, address(this), recipient);
-    } else {
-      timestamp = 0;
-      flowRate = 0;
-      deposit = 0;
-      owedDeposit = 0;
-    }
+    (timestamp,
+      flowRate,
+      deposit,
+      owedDeposit) = cfa.getFlow(waterDrop.token, address(this), recipient);
   }
 
 }

@@ -72,6 +72,7 @@ contract ConditionalWaterDrop is Ownable {
     waterDrop = Claim(_claimToken, _rate, _duration, _deadline);
   }
 
+  // Initializes the conditional
   function initialize(
       ISuperToken _reqTokenAddress,
       uint _reqAmount,
