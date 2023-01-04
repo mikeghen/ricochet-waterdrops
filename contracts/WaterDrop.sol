@@ -1,18 +1,11 @@
-// SPDX-License-Identifier: Business Source License
+/// SPDX-License-Identifier: Business Source License
 pragma solidity ^0.8.9;
 
-import {
-    ISuperfluid,
-    ISuperToken
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol"; //"@superfluid-finance/ethereum-monorepo/packages/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol"; //"@superfluid-finance/ethereum-monorepo/packages/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
-import {
-    IConstantFlowAgreementV1
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 
-import {
-    CFAv1Library
-} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -95,11 +88,35 @@ contract WaterDrop is Ownable {
 
   function closeNext() public {
 
-    // Streams are opened sequentially, so they can be closed sequentially iff
-    // everyone in the claim is claiming the same amount. Only one claim can
-    // run at one time
+    mapping(uint => Claim) public claims;
+    uint claimCount = 0;
+    mapping(address => uint) public userClaims;
+    address[] closureQueue;
+    uint queueIndex;
+    CFAv1Library.InitData public cfaV1;
+    ISuperfluid internal host; // Superfluid host contract
+    IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
-    address toClose = closureQueue[queueIndex];
+    constructor(ISuperfluid _host, IConstantFlowAgreementV1 _cfa) {
+        host = _host;
+        cfa = _cfa;
+        // initialize InitData struct, and set equal to cfaV1
+        cfaV1 = CFAv1Library.InitData(host, cfa);
+    }
+
+    function addClaim(
+        ISuperToken token,
+        int96 rate,
+        uint duration,
+        uint deadline
+    ) public onlyOwner {
+        // NOTE: Maybe require no streams so you can't run two claims at a time
+        Claim memory claim = Claim(token, rate, duration, deadline);
+        claimCount += 1;
+        claims[claimCount] = claim;
+
+        emit NewClaim(claimCount, token, rate, duration, deadline);
+    }
 
     ( uint256 timestamp,
       int96 flowRate,
@@ -144,4 +161,30 @@ contract WaterDrop is Ownable {
       owedDeposit) = cfa.getFlow(waterDrop.token, address(this), recipient);
   }
 
+    function getFlow(
+        address recipient
+    )
+        public
+        view
+        returns (
+            uint256 timestamp,
+            int96 flowRate,
+            uint256 deposit,
+            uint256 owedDeposit
+        )
+    {
+        // If there's no userClaim for the recipient then they don't have a stream
+        if (userClaims[recipient] != 0) {
+            (timestamp, flowRate, deposit, owedDeposit) = cfa.getFlow(
+                claims[userClaims[recipient]].token,
+                address(this),
+                recipient
+            );
+        } else {
+            timestamp = 0;
+            flowRate = 0;
+            deposit = 0;
+            owedDeposit = 0;
+        }
+    }
 }
