@@ -42,7 +42,7 @@ async function main() {
   let tx;
   for (const userClaim of userClaims) {
     tx = await waterdrop.addUserClaim(userClaim.address, userClaim.claim);
-    await tx.wait(1); 
+    await tx.wait(1);
     console.log("Added user claim", userClaim.address, userClaim.claim);
   }
 
