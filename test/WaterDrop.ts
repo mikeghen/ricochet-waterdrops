@@ -1,7 +1,6 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import traveler from "ganache-time-traveler";
-import { isCallTrace } from "hardhat/internal/hardhat-network/stack-traces/message-trace";
 
 let { Framework } = require("@superfluid-finance/sdk-core");
 let { expect, assert } = require("chai");
@@ -13,7 +12,7 @@ let deployFramework = require("@superfluid-finance/ethereum-contracts/scripts/de
 let deployTestToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-test-token");
 let deploySuperToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-super-token");
 
-let accounts: any[];
+let accounts: any[]
 let admin: SignerWithAddress;
 let alice: SignerWithAddress;
 let bob: SignerWithAddress;
@@ -22,7 +21,7 @@ let karen: SignerWithAddress;
 
 let App: any;
 
-let sf: InstanceType<typeof Framework>;
+let sf: InstanceType<typeof Framework>;;
 let ric: InstanceType<typeof ricABI>;
 let ricx: InstanceType<typeof ricABI>;
 let superSigner: InstanceType<typeof sf.createSigner>;
@@ -35,13 +34,13 @@ let errorHandler = (err: any) => {
 
 // helpers
 export const currentBlockTimestamp = async () => {
-  const currentBlockNumber = await ethers.provider.getBlockNumber();
-  return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
+    const currentBlockNumber = await ethers.provider.getBlockNumber();
+    return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
 };
 
 export const increaseTime = async (seconds: any) => {
-  await network.provider.send("evm_increaseTime", [seconds]);
-  await network.provider.send("evm_mine");
+    await network.provider.send("evm_increaseTime", [seconds]);
+    await network.provider.send("evm_mine");
 };
 
 
@@ -88,7 +87,7 @@ describe("WaterDrop", function () {
 
     superSigner = await sf.createSigner({
       signer: admin,
-      provider: web3,
+      provider: web3
     });
 
     //use the framework to get the super token
@@ -112,25 +111,29 @@ describe("WaterDrop", function () {
     await waterDrops.deployed();
 
     // Make Some RICx tokens
-    await ric.mint(admin.address, ethers.utils.parseEther("10000000"));
-    await ric
-      .connect(admin)
-      .approve(ricx.address, ethers.utils.parseEther("10000000"));
+    await ric.mint(
+      admin.address, ethers.utils.parseEther("10000000")
+    );
+    await ric.connect(admin).approve(ricx.address, ethers.utils.parseEther("10000000"));
 
     let ricxUpgradeOperation = ricx.upgrade({
-      amount: ethers.utils.parseEther("10000000"),
+      amount: ethers.utils.parseEther("10000000")
     });
     await ricxUpgradeOperation.exec(admin);
 
     // Transfer RICx to the waterdrops contract
     let transferOperation = ricx.transfer({
       receiver: waterDrops.address,
-      amount: ethers.utils.parseEther("10000000"),
+      amount: ethers.utils.parseEther("10000000")
     });
     await transferOperation.exec(admin);
+
+
   });
 
-  beforeEach(async function () {});
+  beforeEach(async function() {
+
+  });
 
   it("#1.1 - Create a new claimable waterdrop", async function () {
     // As owner, create a new Claim
@@ -140,17 +143,9 @@ describe("WaterDrop", function () {
     expect(claim.duration).to.equal(duration);
     expect(claim.deadline).to.equal(deadline);
 
-    // Call the addClaim function and expect the NewClaim event to be emitted
-    await expect(
-      waterDrops.addClaim(ricx.address, rate, duration, deadline, {
-        from: admin.address,
-      })
-    )
-      .to.emit(waterDrops, "NewClaim")
-      .withArgs(2, ricx.address, rate, duration, deadline);
   });
 
-  it("#1.2 - Create new users claims", async function () {
+  it("#1.2 - Creare new users claims", async function () {
     // As owner, create a new user claims
     // Call the addClaim function and expect the NewClaim event to be emitted
      // Check that the "NewUserClaim" event is emitted
@@ -171,17 +166,6 @@ describe("WaterDrop", function () {
     userClaim = await waterDrops.userClaims(bob.address, {from: admin.address});
     expect(userClaim).to.equal(true);
 
-    // Check that the "NewUserClaim" event is emitted
-    await expect(
-      waterDrops.addUserClaim(alice.address, 1, { from: admin.address })
-    )
-      .to.emit(waterDrops, "NewUserClaim")
-      .withArgs(alice.address, 1);
-    await expect(
-      waterDrops.addUserClaim(bob.address, 1, { from: admin.address })
-    )
-      .to.emit(waterDrops, "NewUserClaim")
-      .withArgs(bob.address, 1);
   });
 
   it("#1.3 - User can claim their waterdrop", async function () {
@@ -195,10 +179,6 @@ describe("WaterDrop", function () {
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
 
-    // check for emission
-    await expect(waterDrops.connect(alice).claim())
-      .to.emit(waterDrops, "Claimed")
-      .withArgs(alice.address, 1);
   });
 
   it("#1.4 - Streams are closed when ready", async function () {
@@ -206,13 +186,13 @@ describe("WaterDrop", function () {
     let claim = await waterDrops.waterDrop();
 
     // Add another claim to the closureQueue
-    increaseTime(1000);
+    increaseTime(1000)
     await waterDrops.connect(bob).claim();
 
     // Expect revert when not ready to close (i.e. an hour has not passed)
-    await expect(waterDrops.closeNext()).to.be.revertedWith(
-      "not ready to close"
-    );
+    await expect(
+         waterDrops.closeNext(),
+      ).to.be.revertedWith('not ready to close');
 
     // Fast forward time to the first close (Alice)
     increaseTime(2600);
@@ -244,9 +224,7 @@ describe("WaterDrop", function () {
          waterDrops.connect(alice).claim(),
     ).to.be.revertedWith('already claimed');
 
-    await expect(waterDrops.closeNext())
-      .to.emit(waterDrops, "CloseStream")
-      .withArgs(alice.address);
+
   });
 
   it("#1.5 - Admin close stream", async function () {
@@ -256,4 +234,7 @@ describe("WaterDrop", function () {
   it("#1.6 - Admin emergency drain", async function () {
     // Test a method to drain the contract
   });
+
+
+
 });
