@@ -42,6 +42,14 @@ contract WaterDrop is Ownable {
   ISuperfluid internal host; // Superfluid host contract
   IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
+  // Events
+  event NewWaterdrop(ISuperToken token, int96 rate, uint duration, uint deadline);
+  event NewUserClaim(address recipient);
+  event Claimed(address user, int96 rate);
+  event StreamClosed(
+      address user,
+      address token
+  );
 
   constructor(ISuperfluid _host,
     IConstantFlowAgreementV1 _cfa,
@@ -60,11 +68,13 @@ contract WaterDrop is Ownable {
     );
     // Save the claim info
     waterDrop = Claim(_claimToken, _rate, _duration, _deadline);
+    emit NewWaterdrop(_claimToken, _rate, _duration, _deadline);
   }
 
   // Used to add accounts to be eligible for the claim
   function addUserClaim(address recipient) public onlyOwner {
     userClaims[recipient] = true;
+    emit NewUserClaim(recipient);
   }
 
   function claim() public {
@@ -79,6 +89,7 @@ contract WaterDrop is Ownable {
     hasClaimed[msg.sender] = true;
     closureQueue.push(msg.sender);
     cfaV1.createFlow(msg.sender, waterDrop.token, waterDrop.rate);
+    emit Claimed(msg.sender, waterDrop.rate);
 
   }
 
@@ -113,14 +124,12 @@ contract WaterDrop is Ownable {
       queueIndex += 1;
       // Remove the claim for this user
       userClaims[toClose] = false;
+      emit StreamClosed(toClose, address(waterDrop.token));
     } else {
       // If we don't need to close, revert with message for Gelato
       revert('not ready to close');
     }
 
-
-    // 2. How much has been streamed to this recipient so far? Is it more than rate * duration?
-    // TODO
   }
 
   // Convinence method for getting flow information

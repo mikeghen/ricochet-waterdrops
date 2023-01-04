@@ -147,8 +147,18 @@ describe("WaterDrop", function () {
 
   it("#1.2 - Creare new users claims", async function () {
     // As owner, create a new user claims
-    await waterDrops.addUserClaim(alice.address, {from: admin.address});
-    await waterDrops.addUserClaim(bob.address, {from: admin.address});
+    // Call the addClaim function and expect the NewClaim event to be emitted
+     // Check that the "NewUserClaim" event is emitted
+     await expect(
+      waterDrops.addUserClaim(alice.address, { from: admin.address })
+    )
+      .to.emit(waterDrops, "NewUserClaim")
+      .withArgs(alice.address);
+    await expect(
+      waterDrops.addUserClaim(bob.address, { from: admin.address })
+    )
+      .to.emit(waterDrops, "NewUserClaim")
+      .withArgs(bob.address);
 
     // Verify the userClaims were made correctly
     let userClaim = await waterDrops.userClaims(alice.address, {from: admin.address});
@@ -161,16 +171,19 @@ describe("WaterDrop", function () {
   it("#1.3 - User can claim their waterdrop", async function () {
 
     // As water drop recipient, claim the water drop
-    await waterDrops.connect(alice).claim();
+    await expect(waterDrops.connect(alice).claim())
+      .to.emit(waterDrops, "Claimed")
+      .withArgs(alice.address, 1000000);
     
-    // verify the stream exists to the receipient
+    // Verify the stream exists to the receipient
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(1000000);
 
   });
 
   it("#1.4 - Streams are closed when ready", async function () {
-    // As the keeper, call the closeNext() method
+
+    let claim = await waterDrops.waterDrop();
 
     // Add another claim to the closureQueue
     increaseTime(1000)
@@ -184,7 +197,9 @@ describe("WaterDrop", function () {
     // Fast forward time to the first close (Alice)
     increaseTime(2600);
 
-    await waterDrops.closeNext();
+    await expect(waterDrops.closeNext())
+    .to.emit(waterDrops, "StreamClosed")
+    .withArgs(alice.address, claim.token);
 
     let flow = await waterDrops.getFlow(alice.address);
     expect(flow.flowRate).to.equal(0);
@@ -193,11 +208,13 @@ describe("WaterDrop", function () {
 
     await expect(
         waterDrops.closeNext(),
-      ).to.be.revertedWith('not ready to close');
+    ).to.be.revertedWith('not ready to close');
 
     increaseTime(2600);
 
-    await waterDrops.closeNext();
+    await expect(waterDrops.closeNext())
+    .to.emit(waterDrops, "StreamClosed")
+    .withArgs(bob.address, claim.token);
 
     flow = await waterDrops.getFlow(bob.address);
     expect(flow.flowRate).to.equal(0);
