@@ -55,7 +55,7 @@ describe("WaterDrop", function () {
 
     duration = 3600; // one hour
     rate = 1000000;  // tokens per second to claim
-    deadline = (await currentBlockTimestamp()) * 7200; // 2 hours
+    deadline = 1676437201; //(await currentBlockTimestamp()) * 7200; // 2 hours
 
     //deploy the framework
     await deployFramework(errorHandler, {

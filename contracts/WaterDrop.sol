@@ -79,7 +79,7 @@ contract WaterDrop is Ownable {
 
   function claim() public {
     // Anyone can claim as long as they meet the conditions below
-    require(waterDrop.deadline > block.timestamp, 'dealine past');
+    require(waterDrop.deadline > block.timestamp, 'deadline past');
     require(hasClaimed[msg.sender] == false, 'already claimed');
 
     // Require they have a user claim
