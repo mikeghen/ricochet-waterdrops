@@ -33,12 +33,12 @@ contract WaterDrop is Ownable {
   Claim public waterDrop;
   mapping(address=>bool) public userClaims;
   uint public claimCount = 0;
-  address[] closureQueue;
-  uint queueIndex;
+  address[] public closureQueue;
+  uint public queueIndex;
   mapping(address=>bool) public hasClaimed;
 
   // Superfluid variables
-  CFAv1Library.InitData public cfaV1;
+  CFAv1Library.InitData internal cfaV1;
   ISuperfluid internal host; // Superfluid host contract
   IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
