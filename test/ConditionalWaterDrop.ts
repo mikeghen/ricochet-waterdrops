@@ -120,7 +120,7 @@ describe("ConditionalWaterDrop", function () {
     // As owner, create a new Claim
     duration = 3600; // one hour
     rate = 1000000; // tokens per second to claim
-    deadline = (await currentBlockTimestamp()) + 365 * 24 * 60 * 60; // 1 year
+    deadline = 0; // no deadline for conditional water drop
     waterDrops = await App.deploy(
       sf.settings.config.hostAddress,
       sf.settings.config.cfaV1Address,

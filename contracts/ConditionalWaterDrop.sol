@@ -39,22 +39,22 @@ contract ConditionalWaterDrop is Ownable {
     }
 
     // Claims tracking Variables
-    Claim waterDrop;
-    uint claimCount = 0;
-    address[] closureQueue;
-    uint queueIndex;
-    mapping(address => bool) hasClaimed;
+    Claim public waterDrop;
+    uint public claimCount = 0;
+    address[] public closureQueue;
+    uint public queueIndex;
+    mapping(address => bool) public hasClaimed;
 
     // Sueprfluid Variables
-    CFAv1Library.InitData public cfaV1;
+    CFAv1Library.InitData internal cfaV1;
     ISuperfluid internal host; // Superfluid host contract
     IConstantFlowAgreementV1 internal cfa; // The stored constant flow agreement class address
 
     // Variables for Conditional
-    ISuperToken reqTokenAddress; // Token thats being streamed into the conditional receiver
-    uint reqAmount; // The amount that has to be streamed as part of the conditional
-    uint reqDuration; // The duration that a stream has to be open as part of the conditional
-    address recipient; // The receiver of the stream for the conditional
+    ISuperToken public reqTokenAddress; // Token thats being streamed into the conditional receiver
+    uint public reqAmount; // The amount that has to be streamed as part of the conditional
+    uint public reqDuration; // The duration that a stream has to be open as part of the conditional
+    address public recipient; // The receiver of the stream for the conditional
 
     constructor(
         ISuperfluid _host,
@@ -87,7 +87,6 @@ contract ConditionalWaterDrop is Ownable {
 
     function claim() public {
         // Anyone can claim as long as they meet the conditions below
-        require(waterDrop.deadline > block.timestamp, "dealine past");
         require(hasClaimed[msg.sender] == false, "already claimed");
         (
             uint256 timestamp,
